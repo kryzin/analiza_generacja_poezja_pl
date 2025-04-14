@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from models.form_classifier import PoemFormClassifier
 
 
-def prepare_dataset(df, tokenizer, text_column="content", label_column="genre"):
+def prepare_dataset(df, tokenizer, text_column="content", label_column="type"):
     df = df.copy()
     df["labels"] = df[label_column].map(label2id)
     dataset = Dataset.from_pandas(df)
@@ -29,13 +29,14 @@ def prepare_dataset(df, tokenizer, text_column="content", label_column="genre"):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv("rhyme_analyzed_poems.csv")
-    unique_forms = sorted(df["genre"].unique())
+    df = pd.read_csv("data/analiza_poetycka.csv")
+    unique_forms = sorted(df["type"].unique())
     label2id = {form: i for i, form in enumerate(unique_forms)}
     id2label = {i: form for form, i in label2id.items()}
 
-    train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42)
-    eval_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42)
+    # stratify bo były puste w train
+    train_df, temp_df = train_test_split(df, test_size=0.3, random_state=42, stratify=df['type'])
+    eval_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42, stratify=df['type'])
 
     tokenizer = AutoTokenizer.from_pretrained("allegro/herbert-base-cased")
 
