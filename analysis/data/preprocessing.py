@@ -144,7 +144,27 @@ def year_to_polish_words(year):
     else:
         base = "dwa tysiące" if century == 20 else "tysiąc dziewięćset"
         return f"{base} {get_year_end(year_end)}"
+# --------------------------Ostatnie słowa do klas. rymów-------------------------
+
+
+def get_last_words(text, max_lines=10):
+    lines = text.strip().split("\n")
+    words = []
+    for line in lines[:max_lines]:
+        tokens = re.findall(r"\b\w+\b", line.lower())
+        if tokens:
+            words.append(tokens[-1])
+    return " ".join(words)
+
+
+def add_rhyme_column(df, source_column="content", target_column="rhyme_input"):
+    df[target_column] = df[source_column].apply(get_last_words)
+    return df
 
 
 if __name__ == "__main__":
-    normalize_csv('nonnull_poems.csv', 'normalized_poems.csv', content_column='content')
+    # normalize_csv('nonnull_poems.csv', 'normalized_poems.csv', content_column='content')
+
+    df = pd.read_csv('./analysis/data/wiersze_lemma.csv')
+    add_rhyme_column(df)
+    df.to_csv('./analysis/data/wiersze_rhyme_col.csv')
