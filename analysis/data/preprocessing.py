@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import epitran  # https://pypi.org/project/epitran/
 
 
 # --------------------------------------NORMALIZACJA-----------------------------
@@ -162,9 +163,28 @@ def add_rhyme_column(df, source_column="content", target_column="rhyme_input"):
     return df
 
 
+def add_phonetic_column(df, column_name ='rhyme_input', new_column='rhyme_phonetic'):
+    epi = epitran.Epitran('pol-Latn')
+
+    def to_phonetic(word):
+        try:
+            if isinstance(word, str):
+                return epi.transliterate(word.lower())
+            return ''
+        except Exception as e:
+            print(f"error przy transkrypcji '{word}': {e}")
+            return ''
+
+    df[new_column] = df[column_name].apply(to_phonetic)
+    return df
+
+
 if __name__ == "__main__":
     # normalize_csv('nonnull_poems.csv', 'normalized_poems.csv', content_column='content')
 
-    df = pd.read_csv('./analysis/data/wiersze_lemma.csv')
-    add_rhyme_column(df)
-    df.to_csv('./analysis/data/wiersze_rhyme_col.csv')
+    df = pd.read_csv('./data/wiersze_rhyme_col.csv')
+    # add_rhyme_column(df)
+    # df.to_csv('./analysis/data/wiersze_rhyme_col.csv')
+
+    df = add_phonetic_column(df)
+    df.to_csv('./data/wiersze_rhyme_phonet.csv')
