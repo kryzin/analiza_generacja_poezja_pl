@@ -25,8 +25,8 @@ class PoemClassifier:
         return {
             'accuracy': accuracy_score(labels, predictions),
             'f1': f1_score(labels, predictions, average='weighted', zero_division=0),
-            'precision': precision_score(labels, predictions, average='weighted'),
-            'recall': recall_score(labels, predictions, average='weighted')
+            'precision': precision_score(labels, predictions, average='weighted', zero_division=0),
+            'recall': recall_score(labels, predictions, average='weighted', zero_division=0)
         }
 
     def _initialize_model(self, trial=None):
@@ -49,9 +49,9 @@ class PoemClassifier:
     def optimize_hyperparameters(self, train_dataset, eval_dataset, n_trials=100):
         def objective(trial):
             # <praca> opisać dobór przedziałów:
-            learning_rate = trial.suggest_float("learning_rate", 1e-4, 5e-4, log=True)
+            learning_rate = trial.suggest_float("learning_rate", 1e-5, 5e-4, log=True)
             weight_decay = trial.suggest_float("weight_decay", 0.01, 0.3)
-            batch_size = trial.suggest_categorical("batch_size", [8, 16, 32, 64])
+            batch_size = trial.suggest_categorical("batch_size", [4, 8, 16])
             warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.3)
 
             model = self._initialize_model(trial)
@@ -86,6 +86,25 @@ class PoemClassifier:
 
             trainer.train()
             eval_results = trainer.evaluate()
+
+            print(f"\n--- Trial {trial.number} ---")
+            print(f"learning_rate: {learning_rate}")
+            print(f"weight_decay: {weight_decay}")
+            print(f"batch_size: {batch_size}")
+            print(f"warmup_ratio: {warmup_ratio}")
+            print("Evaluation metrics:")
+            for k, v in eval_results.items():
+                print(f"{k}: {v:.4f}")
+            print("------\n")
+
+            preds = trainer.predict(eval_dataset)
+            labels = preds.label_ids
+            predictions = np.argmax(preds.predictions, axis=1)
+            f1_micro = f1_score(labels, predictions, average='micro')
+            print(f"f1_micro: {f1_micro:.4f}")
+
+            torch.cuda.empty_cache()
+
             return eval_results["eval_f1"]
 
         # https://optuna.readthedocs.io/en/stable/reference/generated/optuna.create_study.html
@@ -102,7 +121,7 @@ class PoemClassifier:
     # https://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html
     def _compute_class_weights(self, dataset):
         labels = [item['labels'].item() for item in dataset]
-        classes = sorted(set(labels))
+        classes = np.array(sorted(set(labels)))
 
         weights = compute_class_weight(
             class_weight='balanced',
@@ -145,13 +164,13 @@ class PoemClassifier:
             learning_rate=learning_rate,
             weight_decay=weight_decay,
             warmup_ratio=warmup_ratio,
-            evaluation_strategy="epoch",
+            eval_strategy="epoch",
             save_strategy="epoch",
             load_best_model_at_end=True,
             metric_for_best_model="f1",
             logging_dir=f"{output_dir}/logs",
             logging_strategy="epoch",
-            report_to="tensorboard",
+            report_to="none",
             save_total_limit=2,
             fp16=True,
             gradient_accumulation_steps=1,
