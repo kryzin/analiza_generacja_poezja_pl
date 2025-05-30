@@ -1,0 +1,15 @@
+{
+  "provider": "openai",
+  "openai_model": "gpt-4o-mini",
+  "openai_api_key": "",
+  "themes": [
+  "miłość", "noc", "przemijanie", "natura", "tęsknota", "wolność",
+  "samotność", "wojna", "dzieciństwo", "czas", "wiara", "nadzieja",
+  "cisza", "śmierć", "życie", "światło", "sen", "droga", "deszcz", "zdrada"],
+  "keywords": [
+  "księżyc", "cień", "róża", "sen", "jezioro", "zegar", "szept", "ogień",
+  "kamień", "serce", "gwiazda", "dusza", "list", "ptak", "burza", "mgła",
+  "promień", "płomień", "lustro", "zegar"],
+  "forms": ["sonet", "wiersz", "fraszka", "oda"],
+  "rhyme_schemes": ["ABAB", "AABB", "ABBA", "wolny"]
+}
